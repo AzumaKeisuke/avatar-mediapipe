@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Interactive AI Avatar (Split View)</title>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: sans-serif; background-color: #333; color: #fff; }
+        .main-container {
+            display: flex;
+            flex-wrap: wrap; /* 画面が狭い場合に折り返す */
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        h1 { width: 100%; text-align: center; margin: 0 0 20px 0; }
+        .canvas-wrapper {
+            position: relative;
+            border: 2px solid #555;
+            background-color: #000;
+        }
+        /* カメラ映像用 */
+        #detection-canvas {
+            width: 480px;
+            height: 360px;
+            transform: scaleX(-1); 
+        }
+        /* アバター用 */
+        #avatar-canvas {
+            width: 480px;
+            height: 640px;
+            background-color: #4a4a4a;
+            background-image:
+                linear-gradient(45deg, #555 25%, transparent 25%, transparent 75%, #555 75%, #555),
+                linear-gradient(45deg, #555 25%, transparent 25%, transparent 75%, #555 75%, #555);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+        }
+        /* 検出用のvideo要素は画面外に隠す */
+        #camera-video {
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+        }
+        .controls-container {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            z-index: 100;
+            background-color: rgba(0,0,0,0.6);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .control-item {
+            display: flex;
+            align-items: center;
+        }
+        .control-item input {
+            margin-right: 8px;
+        }
+    </style>
+    <!-- importmapは変更なし -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/",
+            "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3/lib/three-vrm.module.js",
+            "@pixiv/three-vrm-animation": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm-animation@3/lib/three-vrm-animation.module.js",
+            "@mediapipe/tasks-vision": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.9"
+        }
+    }
+    </script>
+</head>
+<body>
+    <h1>Interactive AI Avatar (Split View)</h1>
+    <div class="main-container">
+        <!-- アバター表示エリア -->
+        <div class="canvas-wrapper">
+            <canvas id="avatar-canvas"></canvas>
+        </div>
+        <!-- カメラ・検出結果表示エリア -->
+        <div class="canvas-wrapper">
+            <canvas id="detection-canvas"></canvas>
+        </div>
+    </div>
+
+    <!-- ★★★ パフォーマンス調査用のコントロールUI ★★★ -->
+    <div class="controls-container">
+        <div class="control-item">
+            <input type="checkbox" id="enable-face-detection" checked>
+            <label for="enable-face-detection">顔検出 (Person)</label>
+        </div>
+        <div class="control-item">
+            <input type="checkbox" id="enable-gesture-detection" checked>
+            <label for="enable-gesture-detection">ジェスチャー検出</label>
+        </div>
+        <div class="control-item">
+            <input type="checkbox" id="enable-lookat" checked>
+            <label for="enable-lookat">視線追従 (LookAt)</label>
+        </div>
+    </div>
+    
+    <!-- 検出処理に使う非表示のvideo要素 -->
+    <video id="camera-video" autoplay playsinline></video>
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>

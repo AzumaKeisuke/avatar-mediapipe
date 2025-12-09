@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>VRMモデル＆アニメーション テストツール</title>
+  <style>
+    body { background: #222; color: #fff; }
+    /* #avatar-canvas { background: #fff; display: block; width: 600px; height: 800px; } */
+    #avatar-canvas {
+      background-color: #fff;
+      background-image:
+        linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc),
+        linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc);
+      background-size: 40px 40px;
+      background-position: 0 0, 20px 20px;
+      display: block;
+      width: 600px;
+      height: 800px;
+    }
+
+    button, input[type="file"], select { margin: 2px; }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/",
+      "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3/lib/three-vrm.module.js",
+      "@pixiv/three-vrm-animation": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm-animation@3/lib/three-vrm-animation.module.js"
+    }
+  }
+  </script>
+</head>
+<body>
+  <h2>VRMモデル＆アニメーション テストツール</h2>
+  <div>
+    <label for="vrm-file"><b>VRMファイル選択</b>：</label>
+    <input type="file" id="vrm-file" accept=".vrm" />
+    <label for="vrma-files"><b>VRMAファイル選択</b>（最大15個まで）：</label>
+    <input type="file" id="vrma-files" accept=".vrma" multiple />
+    <button id="load-model-btn">モデル&アニメ読み込み</button>
+  </div>
+  <div>
+    <label for="anim-list">アニメーション選択：</label>
+    <select id="anim-list" disabled>
+      <option value="">--- なし ---</option>
+    </select>
+    <button id="anim-play-btn" disabled>再生</button>
+    <button id="anim-stop-btn">停止</button>
+  </div>
+  <canvas id="avatar-canvas" width="600" height="800"></canvas>
+  <div>
+    <button onclick="avatar.lipSync(1)">口パクstart</button>
+    <button onclick="avatar.lipSync(-1)">口パクend</button>
+    <button onclick="avatar.blink(1)">まばたき開始</button>
+    <button onclick="avatar.blink(-1)">まばたき終了</button>
+  </div>
+  <script type="module">
+    import { AvatarLoader } from './avatarlib.js';
+    let avatar = new AvatarLoader('avatar-canvas');
+    window.avatar = avatar;
+
+    let selectedVrmFile = null, selectedVrmaFiles = [], selectedVrmaNames = [];
+
+    document.getElementById('vrm-file').addEventListener('change', (e) => {
+      selectedVrmFile = e.target.files[0];
+    });
+    document.getElementById('vrma-files').addEventListener('change', (e) => {
+      let files = Array.from(e.target.files);
+      if (files.length > 15) {
+        alert('アニメーションファイルは15個までしか選択できません。先頭15個のみ使います。');
+        files = files.slice(0, 15);
+      }
+      selectedVrmaFiles = files;
+      selectedVrmaNames = files.map(f => f.name);
+    });
+
+    const animList = document.getElementById('anim-list');
+    const animPlayBtn = document.getElementById('anim-play-btn');
+    const animStopBtn = document.getElementById('anim-stop-btn');
+
+    document.getElementById('load-model-btn').addEventListener('click', async () => {
+      if (!selectedVrmFile) {
+        alert('VRMファイルを選択してください');
+        return;
+      }
+      // 15個超えてる場合の安全処理
+      if (selectedVrmaFiles.length > 15) {
+        selectedVrmaFiles = selectedVrmaFiles.slice(0, 15);
+        selectedVrmaNames = selectedVrmaNames.slice(0, 15);
+      }
+      avatar.clearScene();
+      await avatar.loadModelFromFile(selectedVrmFile, selectedVrmaFiles);
+      // ...（モデル・アニメロード処理）...
+      animList.innerHTML = '';
+      selectedVrmaNames.forEach((name, idx) => {
+        let opt = document.createElement('option');
+        opt.value = idx;
+        opt.textContent = name;
+        animList.appendChild(opt);
+      });
+      animList.disabled = selectedVrmaFiles.length === 0;
+      animPlayBtn.disabled = selectedVrmaFiles.length === 0;
+      if (animList.options.length > 0) animList.selectedIndex = 0;
+    });
+
+    // 再生
+    animPlayBtn.addEventListener('click', () => {
+      let idx = parseInt(animList.value, 10);
+      if (!isNaN(idx)) avatar.action(idx);
+    });
+
+    // 停止
+    animStopBtn.addEventListener('click', () => {
+      avatar.action(-1);
+    });
+
+    // 選択変更時に「再生」ボタン有効化
+    animList.addEventListener('change', () => {
+      animPlayBtn.disabled = (animList.value === "" || animList.value === undefined);
+    });
+  </script>
+</body>
+</html>

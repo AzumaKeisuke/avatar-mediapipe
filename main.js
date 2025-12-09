@@ -93,7 +93,7 @@ class MainController {
         const animUrls = [
             './models/idle.vrma',
             './models/greet.vrma',
-            '/models/wave.vrma'
+            './models/wave.vrma'
         ];
 
         const [vrmBlob, ...animBlobs] = await Promise.all([

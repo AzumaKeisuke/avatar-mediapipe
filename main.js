@@ -29,6 +29,9 @@ class MainController {
         this.avatarCanvas = document.getElementById('avatar-canvas');
         this.detectionCanvas = document.getElementById('detection-canvas');
         this.detectionCtx = this.detectionCanvas.getContext('2d');
+        // ★★★ メッセージ表示用のDOM要素を追加 ★★★
+        this.messageOverlay = document.getElementById('message-overlay');
+        this.messageText = document.getElementById('message-text');
 
         // UI
         this.controls = {
@@ -65,9 +68,15 @@ class MainController {
             aggressive: { REACTION_COOLDOWN: 8000, ROI_WIDTH: 0.2 },
             hybrid: { DWELL_TIME_THRESHOLD: 2000, APPROACH_SIZE_THRESHOLD: 0.15, REACTION_COOLDOWN: 8000, ROI_WIDTH: 0.2 }
         };
+
+        // ★★★ メッセージデータを保持するプロパティを追加 ★★★
+        this.messages = {};
     }
 
     async run() {
+        // ★★★ メッセージファイルを読み込む処理を追加 ★★★
+        await this.loadMessages();
+
         await this.setupCamera(640, 480);
         await this.setupAvatar();
         this.vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.9/wasm" );
@@ -78,6 +87,49 @@ class MainController {
         this.renderLoop();
         this.avatar.action(this.ANIMATION_MAP.IDLE);
         this.avatar.blink(1);
+    }
+
+    // ★★★ メッセージ読み込みメソッドを新規作成 ★★★
+    async loadMessages() {
+        try {
+            const response = await fetch('./messages.json');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            this.messages = await response.json();
+            console.log("メッセージファイルを読み込みました。", this.messages);
+        } catch (error) {
+            console.error("メッセージファイルの読み込みに失敗しました。", error);
+            // ファイルがなくても動作するように、デフォルトのメッセージを設定
+            this.messages = {
+                GREET: "こんにちは！",
+                WAVE: "ありがとう！",
+                BECKON: "見ていきませんか？"
+            };
+        }
+    }
+
+    // ★★★ メッセージ表示/非表示のヘルパーメソッドを新規作成 ★★★
+    /**
+     * メッセージを指定された時間表示します。
+     * @param {string} messageKey - messages.jsonのキー (例: "GREET")
+     * @param {number} duration - 表示時間(ms)。0以下の場合は非表示にします。
+     */
+    displayMessage(messageKey, duration) {
+        const message = this.messages[messageKey] || "";
+
+        if (duration > 0 && message) {
+            this.messageText.innerHTML = message;
+            this.messageOverlay.classList.add('visible');
+
+            // 指定時間後にメッセージを非表示にする
+            setTimeout(() => {
+                this.messageOverlay.classList.remove('visible');
+            }, duration);
+        } else {
+            // durationが0、またはメッセージが空の場合は非表示
+            this.messageOverlay.classList.remove('visible');
+        }
     }
 
     async setupCamera(width, height) {
@@ -264,9 +316,8 @@ class MainController {
         this.updateLookAtTarget(potentialTargets);
     }
     
-    // ★★★ アニメーション再生部分をラップするヘルパーメソッドを作成 ★★★
+    // ★★★ playAvatarActionヘルパーメソッドを修正 ★★★
     playAvatarAction(animationId, duration) {
-        // ロック中、または再生しようとしているのがアイドルアニメーションでなければ再生
         if (this.isAnimationLocked && animationId !== this.ANIMATION_MAP.IDLE) {
             console.log(`アニメーションロック中のため、${animationId} の再生をスキップしました。`);
             return;
@@ -274,15 +325,24 @@ class MainController {
 
         this.avatar.action(animationId);
 
-        // アイドル以外のアニメーションを再生する場合はロックをかける
+        // ★★★ メッセージ表示処理を追加 ★★★
+        // ANIMATION_MAPのIDからキー名を取得する
+        const messageKey = Object.keys(this.ANIMATION_MAP).find(key => this.ANIMATION_MAP[key] === animationId);
+        if (messageKey) {
+            // アニメーション時間より少し短い時間だけメッセージを表示する
+            this.displayMessage(messageKey, duration > 0 ? duration - 500 : 0);
+        }
+
+
         if (animationId !== this.ANIMATION_MAP.IDLE && duration > 0) {
             this.isAnimationLocked = true;
             console.log(`アニメーションロックを開始 (duration: ${duration}ms)`);
 
             setTimeout(() => {
-                // 再生が終わったらロックを解除し、アイドルに戻す
                 console.log("アニメーションロックを解除。");
                 this.isAnimationLocked = false;
+                // ★ アイドルに戻す前に、表示中のメッセージを消す
+                this.displayMessage('IDLE', 0);
                 this.avatar.action(this.ANIMATION_MAP.IDLE);
             }, duration);
         }

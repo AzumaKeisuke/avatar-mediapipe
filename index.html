@@ -64,6 +64,41 @@
         .control-item input {
             margin-right: 8px;
         }
+        /* ★★★ ここからメッセージ用のスタイルを追加 ★★★ */
+        .message-overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 400px;
+            
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            
+            text-align: center;
+            color: #fff;
+            font-size: 18px;
+            
+            opacity: 0; /* 最初は非表示 */
+            visibility: hidden;
+            transition: opacity 0.5s, visibility 0.5s;
+            
+            pointer-events: none; /* メッセージがマウス操作を妨げないように */
+        }
+
+        .message-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #message-text {
+            margin: 0;
+            padding: 0;
+        }
+        /* ★★★ ここまで ★★★ */
     </style>
     <!-- importmapは変更なし -->
     <script type="importmap">
@@ -85,6 +120,11 @@
         <div class="canvas-wrapper">
             <canvas id="avatar-canvas"></canvas>
         </div>
+        <!-- ★★★ ここにメッセージ表示用の要素を追加 ★★★ -->
+        <div id="message-overlay" class="message-overlay">
+            <p id="message-text"></p>
+        </div>
+        <!-- ★★★ ここまで ★★★ -->
         <!-- カメラ・検出結果表示エリア -->
         <div class="canvas-wrapper">
             <canvas id="detection-canvas"></canvas>

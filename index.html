@@ -125,7 +125,23 @@
                 <option value="4">1/4</option>
             </select>
         </div>
-
+    <!-- ★★★ ここから追加 ★★★ -->
+    <div class="control-item" style="flex-direction: column; align-items: flex-start; margin-top: 10px; border-top: 1px solid #777; padding-top: 10px;">
+        <label style="margin-bottom: 5px;">検出戦略 (展示会向け):</label>
+        <div>
+            <input type="radio" id="strategy-selective" name="detection-strategy" value="selective" checked>
+            <label for="strategy-selective">選択的 (関心のある人に)</label>
+        </div>
+        <div>
+            <input type="radio" id="strategy-aggressive" name="detection-strategy" value="aggressive">
+            <label for="strategy-aggressive">積極的 (呼び込み)</label>
+        </div>
+        <div>
+            <input type="radio" id="strategy-hybrid" name="detection-strategy" value="hybrid">
+            <label for="strategy-hybrid">ハイブリッド</label>
+        </div>
+    </div>
+    <!-- ★★★ ここまで追加 ★★★ -->
 
     </div>
     

@@ -6,8 +6,8 @@ export class PersonDetector {
         this.videoElement = null;
         this.isRunning = false;
         this.eventListeners = {
-            personEnter: [],
-            personLeave: []
+            // 'personEnter' と 'personLeave' の代わりに detectionsUpdated を使う
+            detectionsUpdated: []
         };
         this.personDetected = false;
         this.lastDetections = null; // ★ 検出結果を保持するプロパティ
@@ -29,7 +29,7 @@ export class PersonDetector {
                 delegate: "GPU"
             },
             runningMode: "VIDEO",
-            minDetectionConfidence: 0.8
+            minDetectionConfidence: 0.6
         });
     }
 
@@ -63,26 +63,20 @@ export class PersonDetector {
 
         this.frameCount++;
         if (this.frameCount % this.frameSkip === 0) {
-            // ★ 間引きしたフレームだけ推論実行
             this.lastDetections = this.faceDetector.detectForVideo(
                 this.videoElement,
                 performance.now()
             );
 
-            if (this.lastDetections.detections.length > 0) {
-                if (!this.personDetected) {
-                    this.personDetected = true;
-                    this.emit('personEnter');
-                }
-            } else {
-                if (this.personDetected) {
-                    this.personDetected = false;
-                    this.emit('personLeave');
-                }
+            // ★★★ ここを修正 ★★★
+            if (this.lastDetections) {
+                // 検出結果の配列をそのままイベントで渡す
+                this.emit('detectionsUpdated', this.lastDetections.detections);
             }
         }
         requestAnimationFrame(this.detectLoop.bind(this));
     }
+
     // ★★★ 描画メソッドを追加 ★★★
     draw(canvasCtx) {
         if (!this.lastDetections || !this.lastDetections.detections) return;

@@ -6,7 +6,7 @@ class WaveDetector {
         this.handHistory = new Map();
         this.waveTimestamps = new Map();
         this.config = {
-            historyLength: 30,
+            historyLength: 60,
             minAmplitude: 0.05,
             minCrossings: 3,
             waveDuration: 1500,
@@ -21,7 +21,8 @@ class WaveDetector {
             this.handHistory.set(handId, []); 
         }
         const history = this.handHistory.get(handId);
-        history.push({ x: landmarks[0].x, timestamp: Date.now() });
+        //history.push({ x: landmarks[0].x, timestamp: Date.now() }); //手首
+        history.push({ x: landmarks[9].x, timestamp: Date.now() }); //中指
         while (history.length > this.config.historyLength) { history.shift(); }
         if (history.length < this.config.historyLength / 2) { 
             return this.isWaving(handId); 
